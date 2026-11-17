@@ -1,0 +1,45 @@
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Liberation Sans", Arial, sans-serif; font-size: 10.2pt; line-height: 1.55; color: #111; margin: 0; }
+  h1.report-title { font-size: 15pt; text-align: center; margin: 0 0 16pt; text-transform: none; }
+  h2 { font-size: 11.6pt; margin: 16pt 0 6pt; page-break-after: avoid; }
+  h3 { font-size: 10.6pt; margin: 12pt 0 4pt; page-break-after: avoid; }
+  p { margin: 0 0 7pt; text-align: justify; }
+  ul, ol { margin: 0 0 8pt 16pt; padding: 0; }
+  li { margin-bottom: 3pt; }
+  .lead { margin-bottom: 10pt; }
+  .kv { margin: 0 0 4pt 16pt; }
+  .kv b { display: inline-block; min-width: 118pt; }
+  .section { page-break-before: always; }
+  .section.first { page-break-before: avoid; }
+  .fig { margin: 8pt 0 12pt; page-break-inside: avoid; }
+  .fig svg { width: 100%; height: auto; border: 1px solid #d8d8e0; border-radius: 4px; background: #fff; }
+  .fig figcaption { font-size: 9pt; color: #444; text-align: center; margin-top: 4pt; }
+  .table-block { page-break-inside: avoid; margin-bottom: 12pt; }
+  .table-name { font-weight: bold; font-size: 10.4pt; margin: 0 0 1pt; }
+  .table-desc { font-size: 9pt; color: #555; margin: 0 0 3pt; }
+  table.schema { width: 100%; border-collapse: collapse; font-size: 9.4pt; }
+  table.schema th, table.schema td { border: 1px solid #9aa0aa; padding: 2.5pt 5pt; text-align: left; vertical-align: top; }
+  table.schema th { background: #eef1f7; font-weight: bold; }
+  td.col-name { width: 38%; font-family: "DejaVu Sans Mono", monospace; font-size: 8.8pt; }
+  .listing { margin: 0 0 12pt; }
+  .listing-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #c9ccd4; padding-bottom: 2pt; margin-bottom: 3pt; }
+  .listing-file { font-weight: bold; font-size: 10.4pt; }
+  .listing-path { font-size: 8.4pt; color: #666; font-family: "DejaVu Sans Mono", monospace; }
+  .code-note { font-size: 9pt; color: #444; margin: 0 0 3pt; font-style: italic; }
+  pre.code { font-family: "DejaVu Sans Mono", monospace; font-size: 7.55pt; line-height: 1.42;
+             background: #f7f8fa; border: 1px solid #d9dce3; border-left: 3px solid #6b7280;
+             padding: 6pt 8pt; margin: 0; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+  .shot { margin: 0 0 14pt; page-break-inside: avoid; }
+  .shot img { width: 100%; border: 1px solid #c9ccd4; border-radius: 3px; }
+  .shot--narrow img { width: 58%; display: block; margin: 0 auto; }
+  .shot--narrow figcaption { text-align: center; }
+  .shot--form img { width: 66%; display: block; margin: 0 auto; }
+  .shot--form figcaption { text-align: center; }
+  .shot figcaption { font-size: 9pt; color: #444; margin-top: 3pt; }
+  .shots-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+  .two-col { column-count: 2; column-gap: 14pt; }
+  .muted { color: #555; }
+  .note { border-left: 3px solid #2b5fbf; background: #f4f7fd; padding: 6pt 9pt; font-size: 9.4pt; margin: 8pt 0 10pt; }
+</style>

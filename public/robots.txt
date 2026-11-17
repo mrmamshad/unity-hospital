@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /patient
+Disallow: /api/
+
+Sitemap: https://buildcamp.site/sitemap.xml

@@ -1,0 +1,214 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ——— Unity Hospital monochrome console ——— */
+  --canvas: #050505;
+  --ink: #ededee;
+
+  --background: #0a0a0a;
+  --foreground: #ededee;
+  --card: #0d0d0d;
+  --card-foreground: #ededee;
+  --popover: #111111;
+  --popover-foreground: #ededee;
+
+  --primary: #ffffff;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #ededee;
+  --muted: #141414;
+  --muted-foreground: #8c8c8c;
+  --accent: #1c1c1c;
+  --accent-foreground: #ffffff;
+  --destructive: #ff6b6b;
+
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.16);
+  --ring: #ffffff;
+
+  --chart-1: #ffffff;
+  --chart-2: #a3a3a3;
+  --chart-3: #737373;
+  --chart-4: #d4d4d4;
+  --chart-5: #525252;
+
+  --radius: 0.5rem;
+
+  /* status hues */
+  --status-pending: #e4b76a;
+  --status-pending-soft: rgba(228, 183, 106, 0.12);
+  --status-confirmed: #7dd3b0;
+  --status-confirmed-soft: rgba(125, 211, 176, 0.1);
+  --status-cancelled: #ff8a80;
+  --status-cancelled-soft: rgba(255, 138, 128, 0.1);
+
+  --sidebar: #000000;
+  --sidebar-foreground: #ededee;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #161616;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+  --sidebar-ring: #ffffff;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-heading: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+
+  --color-canvas: var(--canvas);
+  --color-ink: var(--ink);
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-soft: var(--status-pending-soft);
+  --color-status-confirmed: var(--status-confirmed);
+  --color-status-confirmed-soft: var(--status-confirmed-soft);
+  --color-status-cancelled: var(--status-cancelled);
+  --color-status-cancelled-soft: var(--status-cancelled-soft);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+
+  --radius-sm: calc(var(--radius) * 0.55);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.35);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.3);
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04), 0 24px 48px -36px rgba(0, 0, 0, 0.9);
+  --shadow-float: 0 30px 70px -30px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-canvas text-foreground antialiased;
+    font-feature-settings: "ss01" on;
+  }
+
+  ::selection {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hairline {
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+
+  .canvas-grid {
+    background-image: radial-gradient(circle at 1px 1px, rgb(20 32 28 / 0.055) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+
+  .sidebar-noise {
+    background-image:
+      radial-gradient(120% 60% at 50% -10%, rgb(138 216 194 / 0.09), transparent 60%),
+      radial-gradient(80% 50% at 100% 100%, rgb(201 139 69 / 0.07), transparent 65%);
+  }
+
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(20 32 28 / 0.18) transparent;
+  }
+
+  .scroll-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scroll-thin::-webkit-scrollbar-thumb {
+    background: rgb(20 32 28 / 0.16);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(20 115 92 / 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgb(20 115 92 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(20 115 92 / 0);
+  }
+}
+
+.live-dot {
+  animation: pulse-ring 2.4s ease-out infinite;
+}

@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Unity Hospital — Software Engineering Lab Report</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Liberation Sans", Arial, sans-serif; font-size: 10.2pt; line-height: 1.55; color: #111; margin: 0; }
+  h1.report-title { font-size: 15pt; text-align: center; margin: 0 0 16pt; text-transform: none; }
+  h2 { font-size: 11.6pt; margin: 16pt 0 6pt; page-break-after: avoid; }
+  h3 { font-size: 10.6pt; margin: 12pt 0 4pt; page-break-after: avoid; }
+  p { margin: 0 0 7pt; text-align: justify; }
+  ul, ol { margin: 0 0 8pt 16pt; padding: 0; }
+  li { margin-bottom: 3pt; }
+  .lead { margin-bottom: 10pt; }
+  .kv { margin: 0 0 4pt 16pt; }
+  .kv b { display: inline-block; min-width: 118pt; }
+  .section { page-break-before: always; }
+  .section.first { page-break-before: avoid; }
+  .fig { margin: 8pt 0 12pt; page-break-inside: avoid; }
+  .fig svg { width: 100%; height: auto; border: 1px solid #d8d8e0; border-radius: 4px; background: #fff; }
+  .fig figcaption { font-size: 9pt; color: #444; text-align: center; margin-top: 4pt; }
+  .table-block { page-break-inside: avoid; margin-bottom: 12pt; }
+  .table-name { font-weight: bold; font-size: 10.4pt; margin: 0 0 1pt; }
+  .table-desc { font-size: 9pt; color: #555; margin: 0 0 3pt; }
+  table.schema { width: 100%; border-collapse: collapse; font-size: 9.4pt; }
+  table.schema th, table.schema td { border: 1px solid #9aa0aa; padding: 2.5pt 5pt; text-align: left; vertical-align: top; }
+  table.schema th { background: #eef1f7; font-weight: bold; }
+  td.col-name { width: 38%; font-family: "DejaVu Sans Mono", monospace; font-size: 8.8pt; }
+  .listing { margin: 0 0 12pt; }
+  .listing-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #c9ccd4; padding-bottom: 2pt; margin-bottom: 3pt; }
+  .listing-file { font-weight: bold; font-size: 10.4pt; }
+  .listing-path { font-size: 8.4pt; color: #666; font-family: "DejaVu Sans Mono", monospace; }
+  .code-note { font-size: 9pt; color: #444; margin: 0 0 3pt; font-style: italic; }
+  pre.code { font-family: "DejaVu Sans Mono", monospace; font-size: 7.55pt; line-height: 1.42;
+             background: #f7f8fa; border: 1px solid #d9dce3; border-left: 3px solid #6b7280;
+             padding: 6pt 8pt; margin: 0; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+  .shot { margin: 0 0 14pt; page-break-inside: avoid; }
+  .shot img { width: 100%; border: 1px solid #c9ccd4; border-radius: 3px; }
+  .shot--narrow img { width: 58%; display: block; margin: 0 auto; }
+  .shot--narrow figcaption { text-align: center; }
+  .shot--form img { width: 66%; display: block; margin: 0 auto; }
+  .shot--form figcaption { text-align: center; }
+  .shot figcaption { font-size: 9pt; color: #444; margin-top: 3pt; }
+  .shots-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+  .two-col { column-count: 2; column-gap: 14pt; }
+  .muted { color: #555; }
+  .note { border-left: 3px solid #2b5fbf; background: #f4f7fd; padding: 6pt 9pt; font-size: 9.4pt; margin: 8pt 0 10pt; }
+</style></head>
+<body>
+
+<h1 class="report-title">Problem: Unity Hospital — Hospital Appointment Management System</h1>
+
+<h2>Problem Definition</h2>
+<p>A typical clinic books patients by phone. The front desk answers calls all day, writes slots on
+paper slips, double-books a doctor when two callers ask for the same time, and has no picture of
+which specialist actually has a free hour. A patient calls five times trying to reach a cardiology
+slot; the desk says "we will call you back" and its note is lost. The hospital cannot even answer
+"how many of tomorrow's slots are taken" without counting by hand.</p>
+<p><b>Unity Hospital</b> is a web-based hospital appointment management system that replaces that workflow
+with one record: a public landing that explains the product and publishes real specialists and
+slots, a patient portal for registration and booking, a front-desk console that triages and
+confirms every request, live capacity reporting, and in-app notifications for both confirmation and
+decline. It is built and deployed as a real product — <b>https://buildcamp.site</b> — not a
+mock-up.</p>
+
+<h2>Objectives</h2>
+<ul>
+  <li>Let a patient see the experts and the times that are actually free, pick a date and a slot,
+      and send one request — no phone calls.</li>
+  <li>Give the front desk a single triage queue: confirm or decline with every decision written
+      back to the same rows the patient reads.</li>
+  <li>Make double booking impossible by construction: booking, confirming and declining each run as
+      one atomic stored procedure, never as two separate writes.</li>
+  <li>Give operations a capacity picture: per-specialist occupancy over a rolling 7-day cycle, plus
+      consultations by date and department mix.</li>
+  <li>Keep one patient record per account — every request, every status change and every
+      notification belongs to the same identity.</li>
+  <li>Ship it: HTTPS, a real domain, process supervision, automatic restarts and a managed
+      PostgreSQL database.</li>
+</ul>
+
+<h2>System Specification</h2>
+<p class="kv"><b>Application type</b>Web application (three surfaces: public landing, patient portal, staff console)</p>
+<p class="kv"><b>Framework</b>Next.js, App Router · TypeScript, Tailwind CSS, shadcn-style components</p>
+<p class="kv"><b>Landing</b>Static Unity Hospital HTML/CSS/JS, rewritten at <code>/</code> by Next.js</p>
+<p class="kv"><b>Server</b>Next.js API routes (Node) · jose JWT (HS256, 7-day, httpOnly session cookie)</p>
+<p class="kv"><b>AuthZ / hashes</b>bcryptjs at cost 10 · server-side role check on every API route</p>
+<p class="kv"><b>Database</b>Supabase-hosted PostgreSQL · row-level security · PL/pgSQL stored procedures</p>
+<p class="kv"><b>Deployment</b>Ubuntu VM · systemd (<code>terafab.service</code> on 127.0.0.1:3001) · Nginx TLS · Cloudflare</p>
+<p class="kv"><b>Roles</b>patient · assistant (hospital front desk)</p>
+<p class="kv"><b>Live data on report date</b>6 specialists · 252 published slots (7-day cycle) · 5 registered patients · 4 appointment requests</p>
+<p class="kv"><b>Verified at</b>http://localhost:3000 and https://buildcamp.site (both exercised end-to-end)</p>
+
+<h2>Project Overview</h2>
+<p>The product splits into the booking surfaces and the data that binds them. A <b>patient</b>
+(Table 5) registers, picks a specialist and a free slot, and sends a request — a single atomic
+write. The <b>front desk</b> sees every request in one queue with per-request confirm / decline; a
+confirmation locks the slot and tells the patient, a decline frees the slot and tells the patient.
+The <b>console</b> also reads the same data for KPIs: pending / confirmed / occupancy (<b>&lt;1%</b>
+when measured), per-specialist booked / free counts, daily trend and department distribution.
+A public <b>landing</b> presents the same product to visitors and feeds the lead table from
+callback requests. Appendix screenshots show every surface running on the live database.</p>
+
+<div class="section">
+<h1 class="report-title">Analysis — Use Case Model</h1>
+<h2>Use case diagram</h2>
+<div class="fig"><svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" font-family="Liberation Sans, Arial, sans-serif"><rect x="150" y="26" width="700" height="568" rx="6" fill="#fcfcfd" stroke="#333" stroke-width="1.1"/><text x="500" y="48" font-size="13.5" font-weight="bold" text-anchor="middle">Unity Hospital — Hospital Appointment Management</text><circle cx="70" cy="130" r="10" fill="none" stroke="#111" stroke-width="1.3"/><line x1="70" y1="140" x2="70" y2="172" stroke="#111" stroke-width="1.3"/><line x1="54" y1="152" x2="86" y2="152" stroke="#111" stroke-width="1.3"/><line x1="70" y1="172" x2="56" y2="196" stroke="#111" stroke-width="1.3"/><line x1="70" y1="172" x2="84" y2="196" stroke="#111" stroke-width="1.3"/><text x="70" y="214" font-size="12" text-anchor="middle">Visitor</text><circle cx="70" cy="360" r="10" fill="none" stroke="#111" stroke-width="1.3"/><line x1="70" y1="370" x2="70" y2="402" stroke="#111" stroke-width="1.3"/><line x1="54" y1="382" x2="86" y2="382" stroke="#111" stroke-width="1.3"/><line x1="70" y1="402" x2="56" y2="426" stroke="#111" stroke-width="1.3"/><line x1="70" y1="402" x2="84" y2="426" stroke="#111" stroke-width="1.3"/><text x="70" y="444" font-size="12" text-anchor="middle">Patient</text><circle cx="930" cy="300" r="10" fill="none" stroke="#111" stroke-width="1.3"/><line x1="930" y1="310" x2="930" y2="342" stroke="#111" stroke-width="1.3"/><line x1="914" y1="322" x2="946" y2="322" stroke="#111" stroke-width="1.3"/><line x1="930" y1="342" x2="916" y2="366" stroke="#111" stroke-width="1.3"/><line x1="930" y1="342" x2="944" y2="366" stroke="#111" stroke-width="1.3"/><text x="930" y="384" font-size="12" text-anchor="middle">Front desk</text><ellipse cx="320" cy="120" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="320" y="124" font-size="11.5" text-anchor="middle">View landing &amp; specialists</text><line x1="84" y1="144" x2="213" y2="120" stroke="#666" stroke-width="0.9"/><ellipse cx="320" cy="182" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="320" y="186" font-size="11.5" text-anchor="middle">Create account</text><line x1="84" y1="184" x2="213" y2="182" stroke="#666" stroke-width="0.9"/><ellipse cx="320" cy="244" rx="95" ry="22" fill="#e8f0e9" stroke="#3b5998" stroke-width="1"/><text x="320" y="248" font-size="11.5" text-anchor="middle">Register / sign in</text><line x1="84" y1="344" x2="228" y2="248" stroke="#666" stroke-width="0.9"/><ellipse cx="320" cy="318" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="320" y="322" font-size="11.5" text-anchor="middle">Browse specialists &amp; free slots</text><line x1="84" y1="392" x2="228" y2="318" stroke="#666" stroke-width="0.9"/><ellipse cx="320" cy="372" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="320" y="376" font-size="11.5" text-anchor="middle">Pick a date &amp; slot</text><line x1="84" y1="392" x2="228" y2="372" stroke="#666" stroke-width="0.9"/><ellipse cx="320" cy="426" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="320" y="430" font-size="11.5" text-anchor="middle">Submit appointment request</text><line x1="84" y1="392" x2="228" y2="426" stroke="#666" stroke-width="0.9"/><ellipse cx="320" cy="480" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="320" y="484" font-size="11.5" text-anchor="middle">Track status in My visits</text><line x1="84" y1="392" x2="228" y2="480" stroke="#666" stroke-width="0.9"/><ellipse cx="320" cy="534" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="320" y="538" font-size="11.5" text-anchor="middle">Receive notifications</text><line x1="84" y1="392" x2="228" y2="534" stroke="#666" stroke-width="0.9"/><ellipse cx="682" cy="200" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="682" y="204" font-size="11.5" text-anchor="middle">Review triage queue</text><line x1="916" y1="316" x2="790" y2="200" stroke="#666" stroke-width="0.9"/><ellipse cx="682" cy="262" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="682" y="266" font-size="11.5" text-anchor="middle">Confirm / decline request</text><line x1="916" y1="316" x2="790" y2="262" stroke="#666" stroke-width="0.9"/><ellipse cx="682" cy="324" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="682" y="328" font-size="11.5" text-anchor="middle">View doctor shifts &amp; capacity</text><line x1="916" y1="316" x2="790" y2="324" stroke="#666" stroke-width="0.9"/><ellipse cx="682" cy="386" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="682" y="390" font-size="11.5" text-anchor="middle">Open patient directory</text><line x1="916" y1="316" x2="790" y2="386" stroke="#666" stroke-width="0.9"/><ellipse cx="682" cy="448" rx="107" ry="22" fill="#eef3fd" stroke="#3b5998" stroke-width="1"/><text x="682" y="452" font-size="11.5" text-anchor="middle">Read capacity &amp; demand</text><line x1="916" y1="316" x2="790" y2="448" stroke="#666" stroke-width="0.9"/><line x1="916" y1="268" x2="460" y2="248" stroke="#666" stroke-width="0.9" stroke-dasharray="4,3"/><text x="500" y="610" font-size="10" text-anchor="middle" fill="#444">A slot is only locked after the front desk confirms&nbsp;&mdash;&nbsp;booking, confirm and cancel run as one database transaction.</text></svg><figcaption>Fig. 1 — Use cases. A request is only a draft until the front desk acts on it.</figcaption></div>
+<h2>Use case descriptions</h2>
+
+    <table class="schema"><thead><tr><th>#</th><th>Use case</th><th>Actor</th><th>When</th><th>What happens</th></tr></thead>
+    <tbody><tr><td class='col-name'>1</td><td><b>View landing &amp; specialists</b></td><td>Visitor</td><td>Opens the homepage.</td><td>Reads the product story, the appointment-system copy and the list of specialists (from medislot_doctors).</td></tr><tr><td class='col-name'>2</td><td><b>Create account</b></td><td>Visitor</td><td>Opens /register.</td><td>Name, email, password. Errors on invalid email, short password, duplicate email, mismatch.</td></tr><tr><td class='col-name'>3</td><td><b>Sign in</b></td><td>Visitor</td><td>Opens /login.</td><td>bcrypt check; role routes them: patient → Book a visit, assistant → Hospital console.</td></tr><tr><td class='col-name'>4</td><td><b>Browse specialists &amp; slots</b></td><td>Patient</td><td>Signed in as patient.</td><td>Picks a specialty, a specialist, sees only the dates and times the hospital has published.</td></tr><tr><td class='col-name'>5</td><td><b>Submit appointment request</b></td><td>Patient</td><td>A free slot selected; optional reason (≤500 chars).</td><td>One atomic transaction: the slot becomes booked, the request is pending, and the dashboard reflects it immediately.</td></tr><tr><td class='col-name'>6</td><td><b>Track status &amp; get notified</b></td><td>Patient</td><td>Any time after a request.</td><td>My visits shows pending / confirmed / cancelled live; notifications arrive on both confirm and decline.</td></tr><tr><td class='col-name'>7</td><td><b>Review triage queue</b></td><td>Front desk</td><td>Signed in as assistant.</td><td>Sees pending requests with token, patient, specialty, slot, complaint and search/filter.</td></tr><tr><td class='col-name'>8</td><td><b>Confirm or decline</b></td><td>Front desk</td><td>A pending request is selected.</td><td>Confirm locks slot + notifies; decline frees slot + notifies. Slot stays unique either way.</td></tr><tr><td class='col-name'>9</td><td><b>View shifts, capacity &amp; directory</b></td><td>Front desk</td><td>Clinical operations nav.</td><td>Doctor shifts (42 slots each over 7 days), occupancy, consultations by date, department mix, patient history.</td></tr></tbody></table>
+</div>
+
+<div class="section">
+<h1 class="report-title">Design — Data Model</h1>
+<h2>Tables</h2>
+
+            <div class="table-block">
+              <p class="table-name">Table: medislot_users</p>
+              <p class="table-desc">One account per person. Patients book; the role `assistant` is the hospital front desk.</p>
+              <table class="schema"><thead><tr><th>Column</th><th>Type / constraint</th></tr></thead>
+              <tbody><tr><td class='col-name'>id</td><td>uuid · primary key</td></tr><tr><td class='col-name'>name</td><td>text · not null</td></tr><tr><td class='col-name'>email</td><td>text · not null, unique</td></tr><tr><td class='col-name'>password_hash</td><td>text · bcrypt (cost 10), never the plaintext</td></tr><tr><td class='col-name'>role</td><td>text · patient | assistant</td></tr><tr><td class='col-name'>created_at</td><td>timestamp · default now()</td></tr></tbody></table>
+            </div>
+            <div class="table-block">
+              <p class="table-name">Table: medislot_doctors</p>
+              <p class="table-desc">Specialists published on the landing and in the portals (6 in the seed data).</p>
+              <table class="schema"><thead><tr><th>Column</th><th>Type / constraint</th></tr></thead>
+              <tbody><tr><td class='col-name'>id</td><td>bigint · primary key</td></tr><tr><td class='col-name'>name</td><td>text · not null</td></tr><tr><td class='col-name'>specialization</td><td>text</td></tr><tr><td class='col-name'>experience_years</td><td>integer</td></tr><tr><td class='col-name'>education</td><td>text</td></tr><tr><td class='col-name'>photo_url</td><td>text · nullable</td></tr></tbody></table>
+            </div>
+            <div class="table-block">
+              <p class="table-name">Table: medislot_time_slots</p>
+              <p class="table-desc">Published consultation times. 252 rows live — a 7-day cycle, 42 per specialist.</p>
+              <table class="schema"><thead><tr><th>Column</th><th>Type / constraint</th></tr></thead>
+              <tbody><tr><td class='col-name'>id</td><td>bigint · primary key</td></tr><tr><td class='col-name'>doctor_id</td><td>bigint · FK → medislot_doctors</td></tr><tr><td class='col-name'>slot_date</td><td>date · published day</td></tr><tr><td class='col-name'>slot_time</td><td>time · e.g. 10:00:00</td></tr><tr><td class='col-name'>is_booked</td><td>boolean · default false; flips true when a request is booked/confirmed</td></tr></tbody></table>
+            </div>
+            <div class="table-block">
+              <p class="table-name">Table: medislot_appointments</p>
+              <p class="table-desc">One appointment request. A slot can belong to at most one confirmed request.</p>
+              <table class="schema"><thead><tr><th>Column</th><th>Type / constraint</th></tr></thead>
+              <tbody><tr><td class='col-name'>id</td><td>bigint · primary key (APT token)</td></tr><tr><td class='col-name'>patient_id</td><td>uuid · FK → medislot_users</td></tr><tr><td class='col-name'>doctor_id</td><td>bigint · FK → medislot_doctors</td></tr><tr><td class='col-name'>slot_id</td><td>bigint · FK → medislot_time_slots</td></tr><tr><td class='col-name'>reason</td><td>text · nullable, capped at 500 chars by the API</td></tr><tr><td class='col-name'>status</td><td>text · pending | confirmed | cancelled</td></tr><tr><td class='col-name'>created_at</td><td>timestamp · default now()</td></tr></tbody></table>
+            </div>
+            <div class="table-block">
+              <p class="table-name">Table: medislot_notifications</p>
+              <p class="table-desc">In-app messages written for the patient on every status change.</p>
+              <table class="schema"><thead><tr><th>Column</th><th>Type / constraint</th></tr></thead>
+              <tbody><tr><td class='col-name'>id</td><td>bigint · primary key</td></tr><tr><td class='col-name'>user_id</td><td>uuid · FK → medislot_users</td></tr><tr><td class='col-name'>message</td><td>text</td></tr><tr><td class='col-name'>is_read</td><td>boolean · default false</td></tr><tr><td class='col-name'>created_at</td><td>timestamp</td></tr></tbody></table>
+            </div>
+            <div class="table-block">
+              <p class="table-name">Table: medislot_leads</p>
+              <p class="table-desc">Landing callback requests. Anonymous visitors may insert; no anonymous reads.</p>
+              <table class="schema"><thead><tr><th>Column</th><th>Type / constraint</th></tr></thead>
+              <tbody><tr><td class='col-name'>id</td><td>bigint · primary key</td></tr><tr><td class='col-name'>name</td><td>text · not null</td></tr><tr><td class='col-name'>phone</td><td>text · not null</td></tr><tr><td class='col-name'>department</td><td>text · default 'General Medicine'</td></tr><tr><td class='col-name'>preferred_day</td><td>text · default 'Any day'</td></tr><tr><td class='col-name'>note</td><td>text · nullable</td></tr><tr><td class='col-name'>created_at</td><td>timestamp · default now()</td></tr></tbody></table>
+            </div>
+<h2>Stored procedures</h2>
+<p>Three PL/pgSQL functions own every write on an appointment, so two writers can never produce a
+double booking or a lost update. They run as one transaction: reads the current state, writes the
+change, writes the notification, commits.</p>
+<div class="table-block">
+  <p class="table-name">medislot_book_appointment(p_patient_id, p_doctor_id, p_slot_id, p_reason)</p>
+  <p class="table-desc">Insert the request with status <i>pending</i> and mark the slot booked. Any
+  conflict — slot already taken, same patient double-booking the day — is rejected inside the
+  transaction. Called by <code>/api/appointments/book</code>.</p>
+</div>
+<div class="table-block">
+  <p class="table-name">medislot_confirm_appointment(p_appointment_id)</p>
+  <p class="table-desc">Set status <i>confirmed</i> and write a notification row to the patient.
+  Called by <code>/api/assistant/confirm</code>.</p>
+</div>
+<div class="table-block">
+  <p class="table-name">medislot_cancel_appointment(p_appointment_id)</p>
+  <p class="table-desc">Set status <i>cancelled</i>, mark the slot free again, and notify the
+  patient. Called by <code>/api/assistant/cancel</code>.</p>
+</div>
+<h2>Row-level security</h2>
+<p>The anonymous insert-only policy on <code>medislot_leads</code> is the only anonymous write
+path: a visitor can submit a callback request, but nobody can read any lead. Every other read/write
+is a role-checked API call on behalf of the signed-in account — the database itself is the
+authoritative barrier.</p>
+<h2>ER diagram</h2>
+<div class="fig"><svg viewBox="0 0 760 520" xmlns="http://www.w3.org/2000/svg" font-family="Liberation Sans, Arial, sans-serif"><rect x="24" y="30" width="210" height="138" rx="5" fill="#fcfcfd" stroke="#333" stroke-width="1.1"/><rect x="24" y="30" width="210" height="22" rx="5" fill="#eef1f7" stroke="#333" stroke-width="1.1"/><text x="31" y="45" font-size="11.5" font-weight="bold">medislot_users</text><text x="31" y="66" font-size="10.5">PK id (uuid)</text><text x="31" y="81" font-size="10.5">name</text><text x="31" y="96" font-size="10.5">email (unique)</text><text x="31" y="111" font-size="10.5">password_hash (bcrypt)</text><text x="31" y="126" font-size="10.5">role: patient | assistant</text><text x="31" y="141" font-size="10.5">created_at</text><rect x="530" y="30" width="210" height="138" rx="5" fill="#fcfcfd" stroke="#333" stroke-width="1.1"/><rect x="530" y="30" width="210" height="22" rx="5" fill="#eef1f7" stroke="#333" stroke-width="1.1"/><text x="537" y="45" font-size="11.5" font-weight="bold">medislot_doctors</text><text x="537" y="66" font-size="10.5">PK id (bigint)</text><text x="537" y="81" font-size="10.5">name</text><text x="537" y="96" font-size="10.5">specialization</text><text x="537" y="111" font-size="10.5">experience_years</text><text x="537" y="126" font-size="10.5">education</text><text x="537" y="141" font-size="10.5">photo_url</text><rect x="530" y="200" width="210" height="123" rx="5" fill="#fcfcfd" stroke="#333" stroke-width="1.1"/><rect x="530" y="200" width="210" height="22" rx="5" fill="#eef1f7" stroke="#333" stroke-width="1.1"/><text x="537" y="215" font-size="11.5" font-weight="bold">medislot_time_slots</text><text x="537" y="236" font-size="10.5">PK id</text><text x="537" y="251" font-size="10.5">FK doctor_id →</text><text x="537" y="266" font-size="10.5">slot_date</text><text x="537" y="281" font-size="10.5">slot_time</text><text x="537" y="296" font-size="10.5">is_booked</text><rect x="266" y="200" width="226" height="153" rx="5" fill="#fcfcfd" stroke="#333" stroke-width="1.1"/><rect x="266" y="200" width="226" height="22" rx="5" fill="#eef1f7" stroke="#333" stroke-width="1.1"/><text x="273" y="215" font-size="11.5" font-weight="bold">medislot_appointments</text><text x="273" y="236" font-size="10.5">PK id</text><text x="273" y="251" font-size="10.5">FK patient_id → users</text><text x="273" y="266" font-size="10.5">FK doctor_id → doctors</text><text x="273" y="281" font-size="10.5">FK slot_id → time_slots</text><text x="273" y="296" font-size="10.5">reason (&lt;=500 chars)</text><text x="273" y="311" font-size="10.5">status: pending|confirmed|cancelled</text><text x="273" y="326" font-size="10.5">created_at</text><rect x="24" y="330" width="210" height="123" rx="5" fill="#fcfcfd" stroke="#333" stroke-width="1.1"/><rect x="24" y="330" width="210" height="22" rx="5" fill="#eef1f7" stroke="#333" stroke-width="1.1"/><text x="31" y="345" font-size="11.5" font-weight="bold">medislot_notifications</text><text x="31" y="366" font-size="10.5">PK id</text><text x="31" y="381" font-size="10.5">FK user_id → users</text><text x="31" y="396" font-size="10.5">message</text><text x="31" y="411" font-size="10.5">is_read</text><text x="31" y="426" font-size="10.5">created_at</text><rect x="530" y="380" width="210" height="123" rx="5" fill="#fcfcfd" stroke="#333" stroke-width="1.1"/><rect x="530" y="380" width="210" height="22" rx="5" fill="#eef1f7" stroke="#333" stroke-width="1.1"/><text x="537" y="395" font-size="11.5" font-weight="bold">medislot_leads</text><text x="537" y="416" font-size="10.5">PK id</text><text x="537" y="431" font-size="10.5">name / phone</text><text x="537" y="446" font-size="10.5">department / preferred_day</text><text x="537" y="461" font-size="10.5">note</text><text x="537" y="476" font-size="10.5">created_at · insert-only by anon</text><path d="M 129 168 L 129 330" fill="none" stroke="#555" stroke-width="0.9"/><text x="136" y="260" font-size="10" fill="#555">1 : N · visits &amp; messages</text><path d="M 234 99 L 250 99 L 250 240 L 266 240" fill="none" stroke="#555" stroke-width="0.9"/><text x="246" y="220" font-size="10" text-anchor="end" fill="#555">1 : N</text><path d="M 379 200 L 379 178 L 635 178 L 635 168" fill="none" stroke="#555" stroke-width="0.9"/><text x="396" y="172" font-size="10" fill="#555">N : 1 · each request has a doctor</text><path d="M 635 168 L 635 200" fill="none" stroke="#555" stroke-width="0.9"/><text x="544" y="188" font-size="10" fill="#555">1 : N · published slots</text><path d="M 530 240 L 492 240" fill="none" stroke="#555" stroke-width="0.9"/><text x="511" y="232" font-size="10" text-anchor="middle" fill="#555">1 : 1</text><text x="380" y="508" font-size="10.5" text-anchor="middle" fill="#444">Every request touches three rows: one appointment, the slot it locks, and one notification to the patient.</text></svg><figcaption>Fig. 2 — Entity relationships. One request = three rows: appointment, slot, notification.</figcaption></div>
+</div>
+
+<div class="section">
+<h1 class="report-title">Implementation</h1>
+<p>Source listings are complete files except where noted. The two large client components —
+<code>src/components/AdminPortal.tsx</code> (hospital console) and
+<code>src/components/PatientPortal.tsx</code> (booking UI) — render on top of the APIs listed and
+are omitted for print; their screenshots are in the appendix.</p>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">Session &amp; password security</span>
+      <span class="listing-path">src/lib/auth.ts</span></div>
+      <p class="code-note">bcryptjs hashing plus a jose JWT — HS256, 7-day expiry, httpOnly/SameSite cookie, verified on every request.</p>
+      <pre class="code">import bcrypt from 'bcryptjs';
+import { SignJWT, jwtVerify } from 'jose';
+import { cookies } from 'next/headers';
+import { SessionUser } from '@/types';
+
+const SECRET_KEY = new TextEncoder().encode(
+  process.env.SESSION_SECRET || 'medislot-default-jwt-secret-key-32-bytes'
+);
+
+const COOKIE_NAME = 'medislot_session';
+
+export async function hashPassword(password: string): Promise&lt;string&gt; {
+  return bcrypt.hash(password, 10);
+}
+
+export async function verifyPassword(password: string, hash: string): Promise&lt;boolean&gt; {
+  // PHP password_hash default creates $2y$... which bcryptjs handles cleanly.
+  // In case of $2y$, replace with $2a$ for perfect compatibility if needed.
+  const compatHash = hash.startsWith('$2y$') ? '$2a$' + hash.slice(4) : hash;
+  return bcrypt.compare(password, compatHash);
+}
+
+export async function createSessionToken(user: SessionUser): Promise&lt;string&gt; {
+  return new SignJWT({ ...user })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(SECRET_KEY);
+}
+
+export async function verifySessionToken(token: string): Promise&lt;SessionUser | null&gt; {
+  try {
+    const { payload } = await jwtVerify(token, SECRET_KEY);
+    return {
+      id: payload.id as string,
+      name: payload.name as string,
+      email: payload.email as string,
+      role: payload.role as 'patient' | 'assistant',
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function getSession(): Promise&lt;SessionUser | null&gt; {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  if (!token) return null;
+  return verifySessionToken(token);
+}
+
+export async function setSessionCookie(user: SessionUser) {
+  const token = await createSessionToken(user);
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  });
+}
+
+export async function clearSessionCookie() {
+  const cookieStore = await cookies();
+  cookieStore.delete(COOKIE_NAME);
+}</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">Database client</span>
+      <span class="listing-path">src/lib/supabase.ts</span></div>
+      <p class="code-note">Server-side client with no persistent auth session: the app identifies users by its own JWT, not by Supabase Auth.</p>
+      <pre class="code">import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kinbycyuzpqgjkkarptg.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('Supabase URL or Anon Key is missing.');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">API · register</span>
+      <span class="listing-path">src/app/api/auth/register/route.ts</span></div>
+      <p class="code-note">Validates input, rejects an existing email, inserts the hashed password and starts the session.</p>
+      <pre class="code">import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { hashPassword, setSessionCookie } from '@/lib/auth';
+
+export async function POST(request: Request) {
+  try {
+    const { name, email, password, confirm_password } = await request.json();
+
+    const cleanName = (name || '').trim();
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    if (!cleanName || !cleanEmail || !password || !confirm_password) {
+      return NextResponse.json({ error: 'All fields are required.' }, { status: 400 });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 });
+    }
+
+    if (password.length &lt; 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters long.' }, { status: 400 });
+    }
+
+    if (password !== confirm_password) {
+      return NextResponse.json({ error: 'Passwords do not match.' }, { status: 400 });
+    }
+
+    // Check existing email
+    const { data: existing } = await supabase
+      .from('medislot_users')
+      .select('id')
+      .eq('email', cleanEmail)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json(
+        { error: 'An account with this email already exists. Please login instead.' },
+        { status: 409 }
+      );
+    }
+
+    const passwordHash = await hashPassword(password);
+
+    const { data: newUser, error: insertError } = await supabase
+      .from('medislot_users')
+      .insert({
+        name: cleanName,
+        email: cleanEmail,
+        password_hash: passwordHash,
+        role: 'patient',
+      })
+      .select('id, name, email, role')
+      .single();
+
+    if (insertError || !newUser) {
+      console.error('Registration insert error:', insertError);
+      return NextResponse.json({ error: 'Failed to create account. Please try again.' }, { status: 500 });
+    }
+
+    await setSessionCookie({
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+    });
+
+    return NextResponse.json({
+      success: true,
+      user: newUser,
+      redirectTo: '/patient',
+    });
+  } catch (err: unknown) {
+    console.error('Registration error:', err);
+    return NextResponse.json({ error: 'An unexpected error occurred. Please try again.' }, { status: 500 });
+  }
+}</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">API · sign in</span>
+      <span class="listing-path">src/app/api/auth/login/route.ts</span></div>
+      <p class="code-note">bcrypt verification (·$2y$ compatible·) and role-aware redirect: patient → /patient, assistant → /admin.</p>
+      <pre class="code">import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { verifyPassword, setSessionCookie } from '@/lib/auth';
+
+export async function POST(request: Request) {
+  try {
+    const { email, password } = await request.json();
+
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail || !password) {
+      return NextResponse.json({ error: 'Please enter your email and password.' }, { status: 400 });
+    }
+
+    const { data: user, error } = await supabase
+      .from('medislot_users')
+      .select('id, name, email, password_hash, role')
+      .eq('email', cleanEmail)
+      .maybeSingle();
+
+    if (error || !user) {
+      return NextResponse.json({ error: 'Invalid email or password. Please try again.' }, { status: 401 });
+    }
+
+    const isValid = await verifyPassword(password, user.password_hash);
+    if (!isValid) {
+      return NextResponse.json({ error: 'Invalid email or password. Please try again.' }, { status: 401 });
+    }
+
+    await setSessionCookie({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
+
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      redirectTo: user.role === 'assistant' ? '/admin' : '/patient',
+    });
+  } catch (err: unknown) {
+    console.error('Login error:', err);
+    return NextResponse.json({ error: 'An unexpected error occurred. Please try again.' }, { status: 500 });
+  }
+}</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">API · slot feed</span>
+      <span class="listing-path">src/app/api/slots/route.ts</span></div>
+      <p class="code-note">Only signed-in callers may read the published slots for a doctor on a date.</p>
+      <pre class="code">import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { getSession } from '@/lib/auth';
+
+export async function GET(request: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const doctorId = parseInt(searchParams.get('doctor_id') || '0', 10);
+  const date = searchParams.get('date') || '';
+
+  if (doctorId &lt;= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return NextResponse.json(
+      { error: 'doctor_id and a valid date (YYYY-MM-DD) are required.' },
+      { status: 400 }
+    );
+  }
+
+  const { data: slots, error } = await supabase
+    .from('medislot_time_slots')
+    .select('id, slot_time, is_booked')
+    .eq('doctor_id', doctorId)
+    .eq('slot_date', date)
+    .order('slot_time', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching slots:', error);
+    return NextResponse.json({ error: 'Failed to fetch slots.' }, { status: 500 });
+  }
+
+  return NextResponse.json(slots || []);
+}</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">API · book a visit</span>
+      <span class="listing-path">src/app/api/appointments/book/route.ts</span></div>
+      <p class="code-note">Patients only. The request goes through a stored procedure — booking is one database transaction, so a slot cannot be double-booked.</p>
+      <pre class="code">import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { getSession } from '@/lib/auth';
+
+export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session || session.role !== 'patient') {
+    return NextResponse.json({ error: 'Not authorized. Patient access only.' }, { status: 403 });
+  }
+
+  try {
+    const { doctor_id, slot_id, reason } = await request.json();
+    const doctorId = parseInt(doctor_id, 10);
+    const slotId = parseInt(slot_id, 10);
+    const cleanReason = (reason || '').trim().slice(0, 500);
+
+    if (!doctorId || !slotId) {
+      return NextResponse.json(
+        { error: 'Please choose a doctor, a date and a free time slot first.' },
+        { status: 400 }
+      );
+    }
+
+    // Call atomic stored function
+    const { data, error } = await supabase.rpc('medislot_book_appointment', {
+      p_patient_id: session.id,
+      p_doctor_id: doctorId,
+      p_slot_id: slotId,
+      p_reason: cleanReason || null,
+    });
+
+    if (error) {
+      console.error('RPC medislot_book_appointment error:', error);
+      return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
+    }
+
+    if (!data.success) {
+      return NextResponse.json({ error: data.error }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      appointment_id: data.appointment_id,
+      slot_date: data.slot_date,
+      doctor_id: data.doctor_id,
+    });
+  } catch (err: unknown) {
+    console.error('Booking error:', err);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
+  }
+}</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">API · my visits</span>
+      <span class="listing-path">src/app/api/appointments/my/route.ts</span></div>
+      <p class="code-note">The patient reads their own requests with live status and the pieces the desk can change.</p>
+      <pre class="code">import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { getSession } from '@/lib/auth';
+
+export async function GET() {
+  const session = await getSession();
+  if (!session || session.role !== 'patient') {
+    return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
+  }
+
+  const { data, error } = await supabase
+    .from('medislot_appointments')
+    .select(`
+      id,
+      status,
+      reason,
+      created_at,
+      doctor:medislot_doctors(name, specialization),
+      time_slot:medislot_time_slots(slot_date, slot_time)
+    `)
+    .eq('patient_id', session.id)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching my appointments:', error);
+    return NextResponse.json({ error: 'Failed to fetch appointments.' }, { status: 500 });
+  }
+
+  // Format response matching original PHP fields
+  const formatted = (data || []).map((row: any) =&gt; ({
+    id: row.id,
+    status: row.status,
+    reason: row.reason,
+    created_at: row.created_at,
+    doctor_name: row.doctor?.name || 'Unknown',
+    specialization: row.doctor?.specialization || '',
+    slot_date: row.time_slot?.slot_date || '',
+    slot_time: row.time_slot?.slot_time || '',
+  }));
+
+  return NextResponse.json(formatted);
+}</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">API · front-desk queue</span>
+      <span class="listing-path">src/app/api/assistant/appointments/route.ts</span></div>
+      <p class="code-note">Assistant-only, newest first; the same request rows, re-shaped for the console UI.</p>
+      <pre class="code">import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { getSession } from '@/lib/auth';
+
+export async function GET(request: Request) {
+  const session = await getSession();
+  if (!session || session.role !== 'assistant') {
+    return NextResponse.json({ error: 'Not authorized. Assistant access only.' }, { status: 403 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const statusFilter = searchParams.get('status') || 'pending';
+
+  let query = supabase
+    .from('medislot_appointments')
+    .select(`
+      id,
+      status,
+      reason,
+      created_at,
+      patient:medislot_users(name, email),
+      doctor:medislot_doctors(name, specialization),
+      time_slot:medislot_time_slots(slot_date, slot_time)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (statusFilter !== 'all' &amp;&amp; ['pending', 'confirmed', 'cancelled'].includes(statusFilter)) {
+    query = query.eq('status', statusFilter);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching assistant appointments:', error);
+    return NextResponse.json({ error: 'Failed to fetch appointments.' }, { status: 500 });
+  }
+
+  const formatted = (data || []).map((row: any) =&gt; ({
+    id: row.id,
+    status: row.status,
+    reason: row.reason,
+    created_at: row.created_at,
+    patient_name: row.patient?.name || 'Unknown Patient',
+    patient_email: row.patient?.email || '',
+    doctor_name: row.doctor?.name || 'Unknown Doctor',
+    specialization: row.doctor?.specialization || '',
+    slot_date: row.time_slot?.slot_date || '',
+    slot_time: row.time_slot?.slot_time || '',
+  }));
+
+  return NextResponse.json(formatted);
+}</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">API · confirm</span>
+      <span class="listing-path">src/app/api/assistant/confirm/route.ts</span></div>
+      <p class="code-note">Locks the appointment, writes a notification to the patient, all atomically.</p>
+      <pre class="code">import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { getSession } from '@/lib/auth';
+
+export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session || session.role !== 'assistant') {
+    return NextResponse.json({ error: 'Not authorized. Assistant access only.' }, { status: 403 });
+  }
+
+  try {
+    const { appointment_id } = await request.json();
+    const appointmentId = parseInt(appointment_id, 10);
+
+    if (!appointmentId) {
+      return NextResponse.json({ error: 'Invalid appointment ID.' }, { status: 400 });
+    }
+
+    const { data, error } = await supabase.rpc('medislot_confirm_appointment', {
+      p_appointment_id: appointmentId,
+    });
+
+    if (error) {
+      console.error('Confirm RPC error:', error);
+      return NextResponse.json({ error: 'Failed to confirm appointment.' }, { status: 500 });
+    }
+
+    if (!data.success) {
+      return NextResponse.json({ error: data.error }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Appointment confirmed. The patient has been notified.',
+    });
+  } catch (err: unknown) {
+    console.error('Confirm error:', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
+  }
+}</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">API · decline</span>
+      <span class="listing-path">src/app/api/assistant/cancel/route.ts</span></div>
+      <p class="code-note">Frees the slot and notifies the patient — again one transaction.</p>
+      <pre class="code">import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { getSession } from '@/lib/auth';
+
+export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session || session.role !== 'assistant') {
+    return NextResponse.json({ error: 'Not authorized. Assistant access only.' }, { status: 403 });
+  }
+
+  try {
+    const { appointment_id } = await request.json();
+    const appointmentId = parseInt(appointment_id, 10);
+
+    if (!appointmentId) {
+      return NextResponse.json({ error: 'Invalid appointment ID.' }, { status: 400 });
+    }
+
+    const { data, error } = await supabase.rpc('medislot_cancel_appointment', {
+      p_appointment_id: appointmentId,
+    });
+
+    if (error) {
+      console.error('Cancel RPC error:', error);
+      return NextResponse.json({ error: 'Failed to cancel appointment.' }, { status: 500 });
+    }
+
+    if (!data.success) {
+      return NextResponse.json({ error: data.error }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Appointment cancelled. The slot is free again and the patient has been notified.',
+    });
+  } catch (err: unknown) {
+    console.error('Cancel error:', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
+  }
+}</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">API · console overview &amp; KPIs</span>
+      <span class="listing-path">src/app/api/admin/overview/route.ts</span></div>
+      <p class="code-note">One query set for the triage dashboard: KPIs, trend series, department distribution, doctor capacity.</p>
+      <pre class="code">import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { getSession } from '@/lib/auth';
+
+export async function GET() {
+  const session = await getSession();
+  if (!session || session.role !== 'assistant') {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 403 });
+  }
+
+  // 1. Fetch appointments
+  const { data: appointments, error: apptErr } = await supabase
+    .from('medislot_appointments')
+    .select(`
+      id,
+      status,
+      reason,
+      created_at,
+      patient:medislot_users(id, name, email),
+      doctor:medislot_doctors(id, name, specialization),
+      time_slot:medislot_time_slots(id, slot_date, slot_time, is_booked)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (apptErr) {
+    console.error('Error fetching appointments for admin overview:', apptErr);
+    return NextResponse.json({ error: 'Database query failed' }, { status: 500 });
+  }
+
+  // 2. Fetch doctors
+  const { data: doctors } = await supabase
+    .from('medislot_doctors')
+    .select('*')
+    .order('name');
+
+  // 3. Fetch time slots
+  const { data: slots } = await supabase
+    .from('medislot_time_slots')
+    .select('id, doctor_id, slot_date, slot_time, is_booked')
+    .order('slot_date');
+
+  // 4. Fetch registered patients
+  const { data: patients } = await supabase
+    .from('medislot_users')
+    .select('id, name, email, created_at')
+    .eq('role', 'patient')
+    .order('created_at', { ascending: false });
+
+  const apptList = (appointments || []).map((row: any) =&gt; ({
+    id: row.id,
+    status: row.status,
+    reason: row.reason,
+    created_at: row.created_at,
+    patient_id: row.patient?.id || '',
+    patient_name: row.patient?.name || 'Unknown Patient',
+    patient_email: row.patient?.email || '',
+    doctor_id: row.doctor?.id || 0,
+    doctor_name: row.doctor?.name || 'Unknown Doctor',
+    specialization: row.doctor?.specialization || '',
+    slot_id: row.time_slot?.id || 0,
+    slot_date: row.time_slot?.slot_date || '',
+    slot_time: row.time_slot?.slot_time || '',
+    is_booked: row.time_slot?.is_booked || false,
+  }));
+
+  // Calculate KPIs
+  const totalAppointments = apptList.length;
+  const pendingCount = apptList.filter((a) =&gt; a.status === 'pending').length;
+  const confirmedCount = apptList.filter((a) =&gt; a.status === 'confirmed').length;
+  const cancelledCount = apptList.filter((a) =&gt; a.status === 'cancelled').length;
+
+  const totalSlotsCount = (slots || []).length;
+  const bookedSlotsCount = (slots || []).filter((s) =&gt; s.is_booked).length;
+  const occupancyRate = totalSlotsCount &gt; 0 ? Math.round((bookedSlotsCount / totalSlotsCount) * 100) : 0;
+
+  // Doctor roster with capacity calculation
+  const doctorsCapacity = (doctors || []).map((doc) =&gt; {
+    const docSlots = (slots || []).filter((s) =&gt; s.doctor_id === doc.id);
+    const booked = docSlots.filter((s) =&gt; s.is_booked).length;
+    const total = docSlots.length;
+    const rate = total &gt; 0 ? Math.round((booked / total) * 100) : 0;
+    return {
+      ...doc,
+      totalSlots: total,
+      bookedSlots: booked,
+      freeSlots: total - booked,
+      occupancyRate: rate,
+      slots: docSlots,
+    };
+  });
+
+  // Trend data by date (for charts)
+  const dateCounts: Record&lt;string, { date: string; pending: number; confirmed: number; cancelled: number; total: number }&gt; = {};
+  apptList.forEach((a) =&gt; {
+    const d = a.slot_date || a.created_at.split('T')[0];
+    if (!dateCounts[d]) {
+      dateCounts[d] = { date: d, pending: 0, confirmed: 0, cancelled: 0, total: 0 };
+    }
+    dateCounts[d].total += 1;
+    if (a.status === 'pending') dateCounts[d].pending += 1;
+    if (a.status === 'confirmed') dateCounts[d].confirmed += 1;
+    if (a.status === 'cancelled') dateCounts[d].cancelled += 1;
+  });
+
+  const datesTrend = Object.values(dateCounts).sort((a, b) =&gt; a.date.localeCompare(b.date));
+
+  // Specialty distribution
+  const specCounts: Record&lt;string, number&gt; = {};
+  apptList.forEach((a) =&gt; {
+    const spec = a.specialization || 'General';
+    specCounts[spec] = (specCounts[spec] || 0) + 1;
+  });
+  const specialtyDistribution = Object.entries(specCounts).map(([name, count]) =&gt; ({
+    name,
+    count,
+  }));
+
+  // Patient directory with booking counts
+  const patientDirectory = (patients || []).map((p) =&gt; {
+    const userAppts = apptList.filter((a) =&gt; a.patient_id === p.id || a.patient_email === p.email);
+    return {
+      id: p.id,
+      name: p.name,
+      email: p.email,
+      registeredAt: p.created_at,
+      totalBookings: userAppts.length,
+      confirmedBookings: userAppts.filter((a) =&gt; a.status === 'confirmed').length,
+      lastVisit: userAppts[0]?.slot_date || null,
+    };
+  });
+
+  return NextResponse.json({
+    kpis: {
+      totalAppointments,
+      pendingCount,
+      confirmedCount,
+      cancelledCount,
+      totalSlotsCount,
+      bookedSlotsCount,
+      occupancyRate,
+      activeDoctorsCount: (doctors || []).length,
+      totalPatientsCount: (patients || []).length,
+    },
+    appointments: apptList,
+    doctors: doctorsCapacity,
+    analytics: {
+      datesTrend,
+      specialtyDistribution,
+    },
+    patients: patientDirectory,
+  });
+}</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">Routing · landing rewrite</span>
+      <span class="listing-path">next.config.ts</span></div>
+      <p class="code-note">Root request rewritten to the static Unity Hospital landing before any page handling — one product, two surfaces.</p>
+      <pre class="code">import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  turbopack: {
+    rules: {
+      "*.css": {
+        loaders: ["@tailwindcss/turbopack"],
+        as: "*.css",
+      },
+    },
+  },
+  async rewrites() {
+    return {
+      beforeFiles: [{ source: "/", destination: "/terafab/index.html" }],
+    };
+  },
+};
+
+export default nextConfig;</pre>
+    </div>
+
+    <div class="listing">
+      <div class="listing-head"><span class="listing-file">Leads table + RLS</span>
+      <span class="listing-path">docs/medislot_leads.sql</span></div>
+      <p class="code-note">Anonymous visitors may insert a callback request; nobody else can read any row.</p>
+      <pre class="code">-- Run in the Supabase SQL editor to persist landing callback requests in Postgres.
+-- Until this exists, /api/leads falls back to .data/leads.ndjson.
+
+create table if not exists public.medislot_leads (
+  id bigint generated always as identity primary key,
+  name text not null,
+  phone text not null,
+  department text not null default 'General Medicine',
+  preferred_day text not null default 'Any day',
+  note text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.medislot_leads enable row level security;
+
+-- Public form: insert only. No anon reads.
+create policy "landing can insert leads"
+  on public.medislot_leads
+  for insert
+  to anon
+  with check (true);</pre>
+    </div>
+</div>
+
+<div class="section">
+<h1 class="report-title">Appendix — Screenshots</h1>
+
+            <figure class="shot shot--form">
+              <img src="shots/01-landing-hero.png" alt="Public landing — Unity Hospital brand over the hospital campus at dusk, with the two entry points (visitor and staff)." />
+              <figcaption>Public landing — Unity Hospital brand over the hospital campus at dusk, with the two entry points (visitor and staff).</figcaption>
+            </figure>
+            <figure class="shot shot--form">
+              <img src="shots/02-landing-continuum.png" alt="The scroll-driven “care continuum”: Type I / II / III scale — from one visit to a lifetime of care." />
+              <figcaption>The scroll-driven “care continuum”: Type I / II / III scale — from one visit to a lifetime of care.</figcaption>
+            </figure>
+            <figure class="shot shot--form">
+              <img src="shots/03-register.png" alt="Create account — the patient sign-up page." />
+              <figcaption>Create account — the patient sign-up page.</figcaption>
+            </figure>
+            <figure class="shot shot--form">
+              <img src="shots/04-login.png" alt="Sign in — the visitor and staff portals share one form." />
+              <figcaption>Sign in — the visitor and staff portals share one form.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="shots/05-patient-booking.png" alt="Patient portal · Book a visit — specialists with specialty and experience, six available." />
+              <figcaption>Patient portal · Book a visit — specialists with specialty and experience, six available.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="shots/06-patient-slots.png" alt="Step 2 · Schedule — seven-day date strip and only the published free slots, with request summary on the right." />
+              <figcaption>Step 2 · Schedule — seven-day date strip and only the published free slots, with request summary on the right.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="shots/07-booking-summary.png" alt="Slot selected (Tue 17, 10:00) plus the consultation note; the summary locks before submission." />
+              <figcaption>Slot selected (Tue 17, 10:00) plus the consultation note; the summary locks before submission.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="shots/09-my-appointments.png" alt="My visits — the request goes out pending, with live status: the patient sees every decision as it lands." />
+              <figcaption>My visits — the request goes out pending, with live status: the patient sees every decision as it lands.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="shots/10-admin-overview.png" alt="Staff console · triage dashboard: awaiting queue, confirmed, occupancy (&lt;1%) and specialists on duty." />
+              <figcaption>Staff console · triage dashboard: awaiting queue, confirmed, occupancy (&lt;1%) and specialists on duty.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="shots/11-admin-shifts.png" alt="Doctor shifts — 7-day cycle capacity: 252 slots total, booked / free / occupancy per specialist." />
+              <figcaption>Doctor shifts — 7-day cycle capacity: 252 slots total, booked / free / occupancy per specialist.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="shots/12-admin-directory.png" alt="Patient directory — registered accounts with booking count and last confirmed visit." />
+              <figcaption>Patient directory — registered accounts with booking count and last confirmed visit.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="shots/13-admin-capacity.png" alt="Capacity &amp; demand — consultations by date, department workload and department mix." />
+              <figcaption>Capacity &amp; demand — consultations by date, department workload and department mix.</figcaption>
+            </figure>
+</div>
+
+</body></html>

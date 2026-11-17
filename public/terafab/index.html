@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>document.documentElement.classList.add('js')</script>
+  <title>Unity Hospital — Hospital Appointment Management</title>
+  <meta name="description" content="Unity Hospital is building the most complete hospital appointment system — specialists, live slots, one triage queue and a record that follows every visit." />
+  <meta name="theme-color" content="#000000" />
+  <meta property="og:title" content="Unity Hospital — Hospital Appointment Management" />
+  <meta property="og:type" content="website" />
+  <meta property="og:description" content="Unity Hospital is building the most complete hospital appointment system — specialists, live slots, one triage queue and a record that follows every visit." />
+  <meta property="og:image" content="https://buildcamp.site/terafab/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url" content="https://buildcamp.site/" />
+  <meta property="og:site_name" content="Unity Hospital" />
+  <link rel="canonical" href="https://buildcamp.site/" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Hospital","name":"Unity Hospital","url":"https://buildcamp.site/","description":"Unity Hospital appointment management — specialists, live slots, one triage queue and a record that follows every visit."}</script>
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Unity Hospital — Hospital Appointment Management" />
+  <meta name="twitter:description" content="Unity Hospital is building the most complete hospital appointment system — specialists, live slots, one triage queue and a record that follows every visit." />
+  <meta name="twitter:image" content="https://buildcamp.site/terafab/assets/og.png" />
+  <link rel="icon" type="image/svg+xml" href="/terafab/assets/favicon.svg" />
+  <!-- P0: non-blocking fonts (same faces/weights; no design change) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@500;600&family=Inter+Tight:wght@300;400;500;600&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=Space+Grotesk:wght@400;500;600&family=Unbounded:wght@500;600&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@500;600&family=Inter+Tight:wght@300;400;500;600&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=Space+Grotesk:wght@400;500;600&family=Unbounded:wght@500;600&display=swap" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@500;600&family=Inter+Tight:wght@300;400;500;600&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=Space+Grotesk:wght@400;500;600&family=Unbounded:wght@500;600&display=swap" />
+  </noscript>
+  <!-- P0: prioritize hero media for first paint -->
+  <link rel="stylesheet" href="/terafab/styles.css?v=20261116f" />
+</head>
+<body id="top">
+
+  <!-- ===================== NAV ===================== -->
+  <header class="nav" id="nav">
+    <div class="nav__frost" aria-hidden="true">
+      <span class="nav__frost-band nav__frost-band--1"></span>
+      <span class="nav__frost-band nav__frost-band--2"></span>
+      <span class="nav__frost-band nav__frost-band--3"></span>
+      <span class="nav__frost-band nav__frost-band--4"></span>
+    </div>
+    <div class="nav__inner">
+      <a class="nav__brand" href="#top" aria-label="Unity Hospital home">
+        <span class="nav__logo" aria-hidden="true">
+          <span class="nav__logo-chip" aria-hidden="true"></span>
+          <svg class="nav__logo-t" viewBox="0 0 90 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M45 4c2.8 0 5 2.2 5 5v14h14c2.8 0 5 2.2 5 5s-2.2 5-5 5H50v14c0 2.8-2.2 5-5 5s-5-2.2-5-5V33H26c-2.8 0-5-2.2-5-5s2.2-5 5-5h14V9c0-2.8 2.2-5 5-5Z" fill="currentColor"/>
+          </svg>
+          <span class="nav__logo-rest-track">
+            <svg class="nav__logo-rest" viewBox="0 0 634 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <text x="12" y="42" fill="currentColor" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-size="44" font-weight="700" letter-spacing="0.22em">UNITY HOSPITAL</text>
+            </svg>
+          </span>
+        </span>
+      </a>
+      <div class="nav__actions">
+        <a class="nav__link" href="/login?portal=patient"><span class="cta__full">Patient login</span><span class="cta__mob">Login</span></a>
+        <a class="nav__link nav__link--cta" href="/register"><span class="cta__full">Book a visit</span><span class="cta__mob">Book</span></a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===================== HERO ===================== -->
+    <section class="hero hero--video" id="hero">
+      <div class="hero__media" aria-hidden="true">
+        <video
+          class="hero__video"
+          aria-hidden="true"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="auto"
+          poster="/terafab/assets/hero/hero-poster.jpg"
+        >
+          <source src="/terafab/assets/hero/hero-loop-mobile.mp4" type="video/mp4" media="(max-width: 767px)" />
+          <source src="/terafab/assets/hero/hero-loop.mp4" type="video/mp4" />
+        </video>
+      </div>
+      <div class="hero__fade" aria-hidden="true"></div>
+      <div class="container hero__content">
+        <h1 class="hero__title">
+          <span class="hero__line hero__title--name">Unity Hospital</span>
+        </h1>
+        <p class="hero__copy hero__seq">Compassionate Care &amp; Seamless Scheduling</p>
+        <div class="hero__actions hero__seq">
+          <a class="link-cta link-cta--fill" href="/register"><span class="cta__full">Book a visit</span><span class="cta__mob">Book</span></a>
+          <a class="link-cta" href="/login?portal=admin"><span class="cta__full">Staff sign in</span><span class="cta__mob">Staff</span></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== STATEMENT (matches terafab-july9) ===================== -->
+    <section class="statement-sec" id="statement">
+      <div class="container">
+        <p class="statement reveal">Unity Hospital takes the hassle out of hospital visits —<br />so the only thing you have to do is show up.</p>
+      </div>
+    </section>
+
+    <!-- ===================== KARDASHEV ===================== -->
+    <section class="kardashev" id="kardashev" data-grid-lines="edge">
+      <div class="kard-shell">
+        <div class="kard-sticky">
+          <div class="kard-media">
+            <video class="kard__vid" data-seg="1" muted playsinline preload="none" poster="/terafab/assets/kardashev/Kardashev_T1.webp?v=20261116"
+              data-src-desktop="/terafab/assets/kardashev/Kardashev_T1-T2.mp4?v=20261116d"
+              data-src-mobile-mp4="/terafab/assets/kardashev/Kardashev_T1-T2.mobile.mp4?v=20261116d"></video>
+            <video class="kard__vid" data-seg="2" muted playsinline preload="none" poster="/terafab/assets/kardashev/Kardashev_T2.webp?v=20261116"
+              data-src-desktop="/terafab/assets/kardashev/Kardashev_T2-T3.mp4?v=20261116d"
+              data-src-mobile-mp4="/terafab/assets/kardashev/Kardashev_T2-T3.mobile.mp4?v=20261116d"></video>
+            <div class="kard-scrim"></div>
+          </div>
+          <div class="container kard-overlay">
+            <p class="kicker">The Care Continuum</p>
+            <h2 class="kard__title">From one visit to a lifetime of care.</h2>
+            <ol class="scale">
+              <li class="scale__tier is-active" data-tier="1"><span class="scale__id">Type I</span><span class="scale__desc">One visit. A specialist, a live slot, a confirmed appointment.</span></li>
+              <li class="scale__tier" data-tier="2"><span class="scale__id">Type II</span><span class="scale__desc">One week. Every doctor, every shift, every free slot on one roster.</span></li>
+              <li class="scale__tier" data-tier="3"><span class="scale__id">Type III</span><span class="scale__desc">One lifetime. Every visit, note and status on one record.</span></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SUN ===================== -->
+    <section class="scene sun" id="sun" data-grid-lines="edge">
+      <div class="scene__media">
+        <video class="scene__bg" autoplay muted loop playsinline preload="none" poster="/terafab/assets/sun/Sun_clean_poster.webp?v=20261116e"
+          data-src-desktop="/terafab/assets/sun/Sun_clean.mp4?v=20261116e"
+          data-src-mobile="/terafab/assets/sun/Sun_clean.mobile.mp4?v=20261116e"
+          data-poster-desktop="/terafab/assets/sun/Sun_clean_poster.webp?v=20261116e"
+          data-poster-mobile="/terafab/assets/sun/Sun_clean_mobile_poster.webp?v=20261116e">
+          <!-- source attached when #sun nears viewport (P1) -->
+        </video>
+        <div class="scene__scrim sun__scrim-top" aria-hidden="true"></div>
+        <div class="scene__scrim sun__scrim" aria-hidden="true"></div>
+      </div>
+      <div class="sun__overlay" aria-hidden="true">
+        <div class="container">
+          <div class="sun__marker">
+            <div class="sun__callout">
+              <div class="sun__label" role="img" aria-label="You are here"></div>
+              <span class="sun__tick" aria-hidden="true"></span>
+            </div>
+            <div class="sun__earth-wrap">
+              <svg class="sun__ring" viewBox="0 0 40 40" aria-hidden="true">
+                <path class="sun__ring-sketch" pathLength="1" d="M20 7 C26.4 6.4 32.2 10.8 33.4 16.8 C34.2 22.4 30.4 28.2 24.2 30.4 C18.4 32.4 12.2 30 9.6 24.4 C7.6 19.6 9.2 14 13.4 10.2 C15.8 8.2 18.2 7.2 20 7 C21.4 7.4 22.6 8.6 21.2 9.2" />
+                <path class="sun__ring-path" pathLength="1" d="M20 7.6 C25.8 7.2 30.6 11 31.6 16.2 C32.4 21 28.8 25.8 23.8 27.6 C18.6 29.4 13.4 27.2 11.2 22.4 C9.4 18.2 10.8 13.4 14.2 10.4 C16.2 8.8 18.2 8 20 7.6 C21.2 7.8 22.2 8.8 21.4 9.2" />
+              </svg>
+              <span class="sun__earth" tabindex="0" aria-label="Earth">
+                <span class="sun__earth-tip" role="tooltip">Earth</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="container scene__content sun__content">
+        <h2 class="h2 reveal">Harnessing the power of <span class="h2__keep">your day</span></h2>
+        <ul class="list">
+          <li class="reveal">Same-week appointments, without the phone queue</li>
+          <li class="reveal">Instant confirmation the moment the desk decides</li>
+          <li class="reveal">A record you can trust at every visit</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== BUILDERS ===================== -->
+    <section class="block builders" id="builders">
+      <div class="container layout-12 builders__grid">
+        <header class="block__head builders__head">
+          <h2 class="h2 reveal">We're builders.<br /><em class="h2__keep">We've rebuilt the front desk.</em></h2>
+        </header>
+        <div class="builders__list">
+          <article class="builder builder--old">
+            <div class="builder__row reveal">
+              <span class="builder__brand builder__brand--word">The old way</span>
+              <ul class="builder__col builder__col--a">
+                <li>Phone queue</li>
+                <li>Paper slips</li>
+                <li>Double bookings</li>
+              </ul>
+              <ul class="builder__col builder__col--b">
+                <li>Lost notes</li>
+                <li>Waiting rooms</li>
+                <li>Manual reminders</li>
+              </ul>
+            </div>
+          </article>
+          <article class="builder builder--new">
+            <div class="builder__row reveal">
+              <span class="builder__brand builder__brand--word">With Unity Hospital</span>
+              <ul class="builder__col builder__col--a">
+                <li>One queue</li>
+                <li>Live status</li>
+                <li>Locked slots</li>
+              </ul>
+              <ul class="builder__col builder__col--b">
+                <li>Instant notifications</li>
+                <li>One record</li>
+                <li>Capacity at a glance</li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== TEAM ===================== -->
+    <section class="block team-sec" id="team">
+      <div class="container">
+        <header class="team-sec__head">
+          <p class="kicker">The team</p>
+          <h2 class="h2 reveal">Three people,<br /><em class="h2__keep">one build.</em></h2>
+          <p class="team-sec__lead reveal">Nabil, Mamshad and Siam designed, built and tested every screen of Unity Hospital.</p>
+        </header>
+
+        <div class="team-stage">
+          <figure class="team-card team-card--side reveal" id="team-siam">
+            <span class="team-photo"><img src="/terafab/assets/team/siam.jpg" alt="Siam" loading="lazy" /></span>
+            <figcaption><b>Siam</b></figcaption>
+          </figure>
+          <figure class="team-card team-card--lead reveal" id="team-nabil">
+            <span class="team-photo"><img src="/terafab/assets/team/nabil.jpg" alt="Nabil" loading="lazy" /></span>
+            <figcaption><b>Nabil</b></figcaption>
+          </figure>
+          <figure class="team-card team-card--side reveal" id="team-mamshad">
+            <span class="team-photo"><img src="/terafab/assets/team/mamshad.jpg" alt="Mamshad" loading="lazy" /></span>
+            <figcaption><b>Mamshad</b></figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FACTORY (Option B: after builders) ===================== -->
+    <section class="factory-sec" id="factory">
+      <div class="factory-sec__media" aria-hidden="true">
+        <img
+          class="factory-sec__bg"
+          src="/terafab/assets/terafab/hospital-campus.webp"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          fetchpriority="low"
+        />
+        <div class="factory-sec__scrim"></div>
+      </div>
+      <div class="container factory-sec__content">
+        <div class="factory-sec__copy">
+          <h2 class="factory-sec__title reveal">A hospital built around one record</h2>
+          <p class="factory-sec__body reveal">Appointments, specialists, live slots and patient history — under one roof</p>
+          <a class="link-cta link-cta--fill factory-sec__cta reveal" href="/login?portal=admin">
+            <span class="cta__full">See the console</span>
+            <span class="cta__mob">Console</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SCALING ===================== -->
+    <section class="block scaling" id="scaling">
+      <div class="container">
+        <header class="block__head scaling__head">
+          <h2 class="h2 reveal">Scaling care for a whole city</h2>
+          <p class="scaling__lead reveal">One roster. One week. Every slot visible.</p>
+        </header>
+        <div class="scaling__grid">
+          <div class="scaling__copy">
+            <div class="figs">
+              <div class="fig reveal"><div class="fig__n">6</div><p>specialists on one shared roster</p></div>
+              <div class="fig reveal"><div class="fig__n">252</div><p>weekly appointment slots published</p></div>
+              <div class="fig reveal"><div class="fig__n">7</div><p>days of live schedule</p></div>
+            </div>
+          </div>
+      <figure class="plate plate--matrix reveal">
+        <div class="slot-matrix" aria-label="Seven-day slot capacity across six specialists">
+          <div class="slot-matrix__head"><span></span><span>mon</span><span>tue</span><span>wed</span><span>thu</span><span>fri</span><span>sat</span><span>sun</span></div>
+          <div class="slot-matrix__row"><span class="slot-matrix__doc">AC</span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="6 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="6 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span></div><div class="slot-matrix__row"><span class="slot-matrix__doc">RC</span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="6 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="6 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span></div><div class="slot-matrix__row"><span class="slot-matrix__doc">ED</span><span class="slot-day" title="3 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i><i></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span><span class="slot-day" title="6 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span></div><div class="slot-matrix__row"><span class="slot-matrix__doc">JW</span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="6 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span></div><div class="slot-matrix__row"><span class="slot-matrix__doc">JS</span><span class="slot-day" title="6 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="6 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span></div><div class="slot-matrix__row"><span class="slot-matrix__doc">SM</span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span><span class="slot-day" title="6 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="4 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i><i></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="slot-day" title="6 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span><span class="slot-day" title="5 of 6 slots booked"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i><i></i></span></div>
+          <div class="slot-matrix__foot">
+            <span><i class="dot-key"></i>Booked</span>
+            <span><i class="dot-key dot-key--free"></i>Free</span>
+            <span>1 doctor · 42 slots</span>
+            <span>6 specialists · 252 slots</span>
+            <span>7 days live</span>
+          </div>
+        </div>
+      </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== TERAFAB OUTPUT ===================== -->
+    <section class="block output" id="output">
+      <div class="container">
+        <header class="block__head">
+          <h2 class="h2 reveal">Every slot accounted for</h2>
+        </header>
+        <!-- scroll-scrubbed capacity calendar with HTML annotation labels (kardashev-style) -->
+        <div class="osc">
+          <div class="osc-shell">
+            <div class="osc-sticky">
+              <div class="osc-media">
+                <video class="osc__vid" muted playsinline preload="none"
+                  poster="/terafab/assets/terafab/Terafab_size_comp_poster.jpg"
+                  data-src="/terafab/assets/terafab/Terafab_size_comp_scrub.mp4"
+                  aria-label="Slot capacity scrubbed by scroll: one request, one doctor’s week of 42 slots, then the hospital’s 252 weekly slots">
+                  <!-- source attached when #output nears viewport (P1) -->
+                </video>
+                <div class="osc-overlay" aria-hidden="true">
+                  <figure class="osc-cap osc-cap--gf">
+                    <span class="osc-cap__n">42 / specialist</span>
+                    <span class="osc-cap__l">One doctor, one week</span>
+                    <span class="osc-cap__line"></span>
+                  </figure>
+                  <figure class="osc-cap osc-cap--tf">
+                    <span class="osc-cap__n">1 request</span>
+                    <span class="osc-cap__l">Every visit starts here</span>
+                    <span class="osc-cap__line"></span>
+                  </figure>
+                  <div class="osc-compare">
+                    <div class="osc-stat osc-stat--hi">
+                      <span class="osc-stat__l">Six specialists</span>
+                      <span class="osc-stat__n">252<span class="osc-stat__u">/week</span></span>
+                    </div>
+                    <span class="osc-compare__div"></span>
+                    <div class="osc-stat osc-stat--us">
+                      <span class="osc-stat__l">Lost requests</span>
+                      <span class="osc-stat__n">0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CHIPS ===================== -->
+    <section class="block chips" id="chips">
+      <div class="container">
+        <header class="block__head"><h2 class="h2 reveal">Four systems, one visit</h2></header>
+        <div class="systems">
+          <article class="system reveal">
+            <div class="system__ui" aria-hidden="true">
+              <div class="ui">
+                <div class="ui__bar"><span class="ui__dot"></span><span class="ui__title">New appointment</span><span class="ui__tag">Live</span></div>
+                <div class="ui__row ui__row--title"><span>N. Hasan</span><span class="ui__muted">New patient</span></div>
+                <div class="ui__row ui__sub"><span>Cardiology · Follow-up</span><span class="ui__muted">20 min</span></div>
+                <div class="ui__slots"><span>09:00</span><span>09:20</span><span class="is-on">09:40</span><span>10:00</span></div>
+                <div class="ui__row ui__sub"><span>Dr. Rahman · Room 4</span><span class="ui__muted">Today</span></div>
+                <div class="ui__btn">Confirm slot</div>
+              </div>
+            </div>
+            <div class="system__meta"><span class="system__num">01</span><h3>Booking</h3><p>Find a specialist and pick a slot</p></div>
+          </article>
+          <article class="system reveal">
+            <div class="system__ui" aria-hidden="true">
+              <div class="ui">
+                <div class="ui__bar"><span class="ui__dot"></span><span class="ui__title">Front-desk queue</span><span class="ui__tag">12 waiting</span></div>
+                <div class="ui__list">
+                  <div class="ui__item"><span class="ui__who">A. Khan</span><span class="ui__time">09:20</span><span class="ui__pill is-wait">Waiting</span></div>
+                  <div class="ui__item"><span class="ui__who">S. Ali</span><span class="ui__time">09:40</span><span class="ui__pill">In room</span></div>
+                  <div class="ui__item"><span class="ui__who">M. Noor</span><span class="ui__time">10:00</span><span class="ui__pill is-done">Seen</span></div>
+                  <div class="ui__item"><span class="ui__who">R. Chowdhury</span><span class="ui__time">10:20</span><span class="ui__pill">Next</span></div>
+                </div>
+                <div class="ui__meter"><span></span></div>
+              </div>
+            </div>
+            <div class="system__meta"><span class="system__num">02</span><h3>Triage</h3><p>One queue for the front desk</p></div>
+          </article>
+          <article class="system reveal">
+            <div class="system__ui" aria-hidden="true">
+              <div class="ui">
+                <div class="ui__bar"><span class="ui__dot"></span><span class="ui__title">Patient record</span><span class="ui__tag">Since 2021</span></div>
+                <div class="ui__row ui__row--title"><span>N. Hasan</span><span class="ui__muted">MRN 2041</span></div>
+                <div class="ui__tl">
+                  <div class="ui__tl-row"><span class="ui__tl-dot"></span><span>Visit · Cardiology</span><em>12 Nov</em></div>
+                  <div class="ui__tl-row"><span class="ui__tl-dot"></span><span>Note · Dr. Rahman</span><em>12 Nov</em></div>
+                  <div class="ui__tl-row"><span class="ui__tl-dot"></span><span>Rx · 2 items</span><em>12 Nov</em></div>
+                  <div class="ui__tl-row"><span class="ui__tl-dot"></span><span>Lab · Blood panel</span><em>12 Nov</em></div>
+                </div>
+              </div>
+            </div>
+            <div class="system__meta"><span class="system__num">03</span><h3>Records</h3><p>Every visit on one patient record</p></div>
+          </article>
+          <article class="system reveal">
+            <div class="system__ui" aria-hidden="true">
+              <div class="ui">
+                <div class="ui__bar"><span class="ui__dot"></span><span class="ui__title">Updates</span><span class="ui__tag">4 new</span></div>
+                <div class="ui__note"><span class="ui__check"></span><div><b>Slot confirmed</b><em>09:20 · Dr. Rahman</em></div></div>
+                <div class="ui__note"><span class="ui__check"></span><div><b>Reminder sent</b><em>1 day before the visit</em></div></div>
+                <div class="ui__note"><span class="ui__check"></span><div><b>Check-in open</b><em>Front desk · 09:10</em></div></div>
+                <div class="ui__note"><span class="ui__check"></span><div><b>Result ready</b><em>Blood panel · 14:05</em></div></div>
+              </div>
+            </div>
+            <div class="system__meta"><span class="system__num">04</span><h3>Notifications</h3><p>Updates the moment the desk decides</p></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SPACE ===================== -->
+    <section class="scene space" id="space" data-grid-lines="edge">
+      <div class="scene__media">
+        <img class="scene__bg" src="/terafab/assets/ai/space-city.webp" alt="" loading="lazy" decoding="async" fetchpriority="low" width="1920" height="1080" />
+        <div class="scene__scrim scene__scrim--space" aria-hidden="true"></div>
+        <div class="scene__scrim scene__scrim--bottom" aria-hidden="true"></div>
+      </div>
+      <div class="container layout-12 scene__content space__content">
+        <div class="space__lead reveal">
+          <div class="space__copy">
+            <p class="kicker">The bigger picture</p>
+            <h2 class="h2">Care: the only truly scalable solution for a growing city</h2>
+          </div>
+        </div>
+        <div class="compare reveal">
+          <div class="compare__col">
+            <h3>Care today</h3>
+            <ul><li>Phone queue</li><li>Paper slips</li><li>Double bookings</li><li>Lost notes</li><li>Waiting rooms</li><li>No visibility</li><li>Manual reminders</li></ul>
+          </div>
+          <div class="compare__col compare__col--win">
+            <h3>Care with Unity Hospital</h3>
+            <ul><li>One queue</li><li>Live status</li><li>Instant notifications</li><li>One record</li></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MASS DRIVERS ===================== -->
+    <section class="scene mass" id="mass">
+      <div class="scene__media">
+        <video class="scene__bg" autoplay muted loop playsinline preload="none" aria-hidden="true"
+          poster="/terafab/assets/mass-driver/Reception_loop_poster.webp"
+          data-src="/terafab/assets/mass-driver/Reception_loop.mp4"></video>
+        <div class="scene__scrim mass__scrim-top" aria-hidden="true"></div>
+        <div class="scene__scrim scene__scrim--left"></div>
+        <div class="scene__scrim scene__scrim--bottom" aria-hidden="true"></div>
+      </div>
+      <div class="container scene__content">
+        <h2 class="h2 reveal">The next step: care without the queue</h2>
+        <div class="scene__actions reveal">
+          <a class="link-cta link-cta--fill" href="/register"><span class="cta__full">Book a visit</span><span class="cta__mob">Book</span></a>
+        </div>
+      </div>
+      <div class="mass__outro" aria-hidden="true"></div>
+    </section>
+
+    <div class="mass-footer-blend" aria-hidden="true"></div>
+
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer" id="join">
+    <canvas class="footer__grid-fx" aria-hidden="true"></canvas>
+    <div class="footer__fade" aria-hidden="true"></div>
+    <div class="container">
+      <div class="footer__cta">
+        <h2 class="footer__head reveal">Care, without<br />the wait.</h2>
+        <div class="footer__actions reveal">
+          <a class="link-cta link-cta--fill" href="/register">Book a visit</a>
+        </div>
+      </div>
+      <div class="footer__meta" aria-hidden="true"></div>
+      <nav class="footer__nav" aria-label="Hospital portals">
+        <a href="/register">Book a visit</a>
+        <a href="/login?portal=patient">Patient login</a>
+        <a href="/login?portal=admin">Staff access</a>
+        <a href="#team">Team</a>
+      </nav>
+      <div class="footer__base">
+        <span class="footer__legal">
+          <span class="footer__credit">© 2026 Unity Hospital · Built by Nabil, Mamshad &amp; Siam.</span>
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Mass driver — modal player (Watch Now) -->
+  <script src="/terafab/main.js?v=20261116f" defer></script>
+  <script src="/terafab/perf.js?v=20261116f" defer></script>
+</body>
+</html>

@@ -1,0 +1,354 @@
+/* Unity Hospital auth — matches the landing page's black, editorial system. */
+
+.tf-auth {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+  background: #000;
+  color: #ededee;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.tf-auth *,
+.tf-auth *::before,
+.tf-auth *::after {
+  box-sizing: border-box;
+}
+
+.tf-auth__visual {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 42px 48px;
+  background: #050505;
+}
+
+.tf-auth__visual img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.45;
+  filter: saturate(0.75) contrast(1.05);
+}
+
+.tf-auth__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.12) 38%, rgba(0, 0, 0, 0.9) 100%),
+    radial-gradient(80% 60% at 50% 40%, transparent, rgba(0, 0, 0, 0.45));
+}
+
+.tf-auth__brand {
+  position: relative;
+  z-index: 2;
+  align-self: flex-start;
+  color: #fff;
+  text-decoration: none;
+  font-family: var(--font-inter-tight), sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.tf-auth__brand span {
+  color: rgba(255, 255, 255, 0.42);
+  letter-spacing: 0.24em;
+}
+
+.tf-auth__quote {
+  position: relative;
+  z-index: 2;
+  max-width: 520px;
+}
+.tf-auth__quote p {
+  margin: 0 0 14px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+.tf-auth__quote h2 {
+  margin: 0;
+  font-family: var(--font-inter-tight), sans-serif;
+  font-weight: 300;
+  font-size: clamp(40px, 5vw, 66px);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  color: #fff;
+}
+.tf-auth__quote span {
+  display: block;
+  margin-top: 18px;
+  max-width: 360px;
+  font-size: 13px;
+  line-height: 22px;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.tf-auth__main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 28px 48px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tf-auth__back {
+  position: absolute;
+  top: 30px;
+  right: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11.5px;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+.tf-auth__back:hover { color: #fff; }
+
+.tf-auth__card {
+  width: 100%;
+  max-width: 432px;
+}
+
+.tf-auth__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+}
+.tf-auth__kicker i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #fff;
+  opacity: 0.65;
+}
+
+.tf-auth__title {
+  margin: 14px 0 0;
+  font-family: var(--font-inter-tight), sans-serif;
+  font-weight: 300;
+  font-size: 46px;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: #fff;
+}
+
+.tf-auth__sub {
+  margin: 12px 0 0;
+  max-width: 360px;
+  font-size: 13.5px;
+  line-height: 22px;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.tf-toggle {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+.tf-toggle button {
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+.tf-toggle button[aria-pressed="true"] {
+  background: #fff;
+  color: #000;
+}
+
+.tf-auth form {
+  margin-top: 24px;
+  display: grid;
+  gap: 15px;
+}
+
+.tf-field {
+  display: grid;
+  gap: 7px;
+}
+.tf-field label {
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+.tf-field__control {
+  position: relative;
+}
+.tf-field__control > svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+.tf-field input {
+  width: 100%;
+  height: 52px;
+  padding: 0 14px 0 43px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 2px;
+  background: #080808;
+  color: #fff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.tf-field input::placeholder { color: rgba(255, 255, 255, 0.28); }
+.tf-field input:focus {
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.tf-eye {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+}
+.tf-eye:hover { color: #fff; }
+
+.tf-submit {
+  width: 100%;
+  height: 52px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #000;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+.tf-submit:hover { background: #e8e8e8; }
+.tf-submit:disabled { opacity: 0.55; cursor: default; }
+
+.tf-error {
+  padding: 11px 13px;
+  border: 1px solid rgba(255, 92, 92, 0.4);
+  background: rgba(255, 60, 60, 0.08);
+  color: #ff9c9c;
+  border-radius: 2px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.tf-helper {
+  margin-top: 20px;
+  padding: 13px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.035);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tf-helper strong {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #fff;
+}
+.tf-helper span {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.45);
+}
+.tf-helper button {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: transparent;
+  color: #fff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+.tf-helper button:hover { background: #fff; color: #000; }
+
+.tf-foot {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  justify-content: space-between;
+}
+.tf-foot a {
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+  padding-bottom: 1px;
+}
+.tf-foot a:hover { border-color: #fff; }
+
+@media (max-width: 980px) {
+  .tf-auth { grid-template-columns: 1fr; }
+  .tf-auth__visual { min-height: 220px; padding: 26px; }
+  .tf-auth__quote { display: none; }
+  .tf-auth__main { border-left: 0; padding: 56px 20px 42px; }
+  .tf-auth__back { top: 20px; right: 20px; }
+}
+
+@media (max-width: 560px) {
+  .tf-auth__visual { min-height: 170px; }
+  .tf-auth__title { font-size: 38px; }
+  .tf-auth__main { padding: 44px 18px 34px; }
+  .tf-auth__back { position: static; margin-bottom: 22px; align-self: flex-start; }
+  .tf-auth__main { align-items: flex-start; }
+}
